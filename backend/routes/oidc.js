@@ -166,7 +166,10 @@ router.get("/callback", async (req, res, next) => {
 			<html>
 			<body>
 				<script>
-					localStorage.setItem('token', '${jwt.token}');
+					localStorage.setItem('authentications', JSON.stringify([{
+						token: '${jwt.token}',
+						expires: '${jwt.expires}'
+					}]));
 					window.location.href = '/';
 				</script>
 			</body>
