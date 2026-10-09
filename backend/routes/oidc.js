@@ -2,6 +2,7 @@ import express from "express";
 import { Issuer, generators } from "openid-client";
 import { debug, express as logger } from "../logger.js";
 import userModel from "../models/user.js";
+import userPermissionModel from "../models/user_permission.js";
 import internalToken from "../internal/token.js";
 
 const router = express.Router({
@@ -118,6 +119,8 @@ router.get("/callback", async (req, res, next) => {
 
 		let user = await userModel.query().findOne({ email: email, is_deleted: 0 });
 
+		let isAdmin = false;
+
 		if (!user) {
 			const name = claims.name || claims.preferred_username || email.split('@')[0];
 			const roles = [];
@@ -141,19 +144,42 @@ router.get("/callback", async (req, res, next) => {
 				avatar: "",
 				roles: roles
 			});
+
+			isAdmin = roles.includes("admin");
 		} else {
 			const adminGroup = process.env.OIDC_ADMIN_GROUP;
 			if (adminGroup) {
 				const groups = claims.groups || claims.roles || [];
-				const isAdmin = groups.includes(adminGroup);
+				isAdmin = groups.includes(adminGroup);
 				const currentRoles = user.roles || [];
 				
 				if (isAdmin && !currentRoles.includes("admin")) {
-					await userModel.query().patchAndFetchById(user.id, { roles: [...currentRoles, "admin"] });
+					user = await userModel.query().patchAndFetchById(user.id, { roles: [...currentRoles, "admin"] });
 				} else if (!isAdmin && currentRoles.includes("admin")) {
-					await userModel.query().patchAndFetchById(user.id, { roles: currentRoles.filter(r => r !== "admin") });
+					user = await userModel.query().patchAndFetchById(user.id, { roles: currentRoles.filter(r => r !== "admin") });
 				}
+			} else {
+				isAdmin = (user.roles || []).includes("admin");
 			}
+		}
+
+		// Ensure permissions row exists and has correct visibility
+		const existingPerm = await userPermissionModel.query().where("user_id", user.id).first();
+		if (existingPerm) {
+			if (existingPerm.visibility !== (isAdmin ? "all" : "user")) {
+				await userPermissionModel.query().where("user_id", user.id).patch({ visibility: isAdmin ? "all" : "user" });
+			}
+		} else {
+			await userPermissionModel.query().insert({
+				user_id: user.id,
+				visibility: isAdmin ? "all" : "user",
+				proxy_hosts: "manage",
+				redirection_hosts: "manage",
+				dead_hosts: "manage",
+				streams: "manage",
+				access_lists: "manage",
+				certificates: "manage",
+			});
 		}
 
 		const jwt = await internalToken.getTokenFromUser(user);
