@@ -100,7 +100,16 @@ router.get("/callback", async (req, res, next) => {
 		const params = client.callbackParams(req);
 		const tokenSet = await client.callback(redirectUri, params, { code_verifier: codeVerifier, state });
 
-		const claims = tokenSet.claims();
+		let claims = tokenSet.claims();
+		if (!claims.email) {
+			try {
+				const userInfo = await client.userinfo(tokenSet.access_token);
+				claims = { ...claims, ...userInfo };
+			} catch (err) {
+				debug(logger, `Failed to fetch userinfo: ${err.message}`);
+			}
+		}
+		
 		const email = claims.email;
 
 		if (!email) {
