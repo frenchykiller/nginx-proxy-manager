@@ -52,7 +52,7 @@ router.get("/login", async (req, res, next) => {
 	}
 
 	try {
-		const redirectUri = `${req.protocol}://${req.get("host")}/api/oidc/callback`;
+		const redirectUri = process.env.OIDC_REDIRECT_URI || `${req.protocol}://${req.get("host")}/api/oidc/callback`;
 		const state = generators.state();
 		const codeVerifier = generators.codeVerifier();
 		const codeChallenge = generators.codeChallenge(codeVerifier);
@@ -91,7 +91,7 @@ router.get("/callback", async (req, res, next) => {
 
 		const state = cookies['oidc_state'];
 		const codeVerifier = cookies['oidc_code_verifier'];
-		const redirectUri = cookies['oidc_redirect_uri'] || `${req.protocol}://${req.get("host")}/api/oidc/callback`;
+		const redirectUri = process.env.OIDC_REDIRECT_URI || cookies['oidc_redirect_uri'] || `${req.protocol}://${req.get("host")}/api/oidc/callback`;
 
 		if (!state || !codeVerifier) {
 			return res.status(400).send({ error: "Missing OIDC state/verifier. Please try logging in again." });
