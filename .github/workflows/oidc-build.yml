@@ -32,7 +32,7 @@ jobs:
         run: |
           cd frontend
           yarn install
-          yarn build
+          yarn locale-compile && yarn build
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

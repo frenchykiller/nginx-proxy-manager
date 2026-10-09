@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import api from "src/modules/Api";
 
 export default function useOidcConfig() {
 	return useQuery({
 		queryKey: ["oidcConfig"],
 		queryFn: async () => {
 			try {
-				const response = await api.get("/oidc/config");
-				return response.data;
+				const response = await fetch("/api/oidc/config");
+				return await response.json();
 			} catch (err) {
 				return { enabled: false };
 			}
