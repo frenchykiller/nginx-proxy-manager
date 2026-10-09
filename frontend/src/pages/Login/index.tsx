@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Alert from "react-bootstrap/Alert";
 import { Button, LocalePicker, Page, ThemeSwitcher } from "src/components";
 import { useAuthState } from "src/context";
-import { useHealth } from "src/hooks";
+import { useHealth, useOidcConfig } from "src/hooks";
 import { intl, T } from "src/locale";
 import { validateEmail, validateString } from "src/modules/Validations";
 import styles from "./index.module.css";
@@ -81,6 +81,7 @@ function LoginForm() {
 	const emailRef = useRef<HTMLInputElement>(null);
 	const [formErr, setFormErr] = useState("");
 	const { login } = useAuthState();
+	const oidcConfig = useOidcConfig();
 
 	const onSubmit = async (values: any, { setSubmitting }: any) => {
 		setFormErr("");
@@ -154,10 +155,16 @@ function LoginForm() {
 								)}
 							</Field>
 						</div>
+						
 						<div className="form-footer">
 							<Button type="submit" fullWidth color="azure" isLoading={isSubmitting}>
 								<T id="sign-in" />
 							</Button>
+							{oidcConfig.data?.enabled && (
+								<Button type="button" fullWidth color="purple" className="mt-2" onClick={() => window.location.href = '/api/oidc/login'}>
+									Login with OIDC
+								</Button>
+							)}
 						</div>
 					</Form>
 				)}

@@ -19,6 +19,7 @@ import settingsRoutes from "./settings.js";
 import tokensRoutes from "./tokens.js";
 import usersRoutes from "./users.js";
 import versionRoutes from "./version.js";
+import oidcRoutes from "./oidc.js";
 
 const router = express.Router({
 	caseSensitive: true,
@@ -55,6 +56,7 @@ router.use("/logs", logsRoutes);
 router.use("/reports", reportsRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/version", versionRoutes);
+router.use("/oidc", oidcRoutes);
 router.use("/nginx/proxy-hosts", proxyHostsRoutes);
 router.use("/nginx/redirection-hosts", redirectionHostsRoutes);
 router.use("/nginx/dead-hosts", deadHostsRoutes);
